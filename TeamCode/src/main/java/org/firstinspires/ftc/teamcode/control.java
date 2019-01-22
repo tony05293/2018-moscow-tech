@@ -31,26 +31,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-
-/**
- * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
- * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
- * of the FTC Driver Station. When an selection is made from the menu, the corresponding OpMode
- * class is instantiated on the Robot Controller and executed.
- *
- * This particular OpMode just executes a basic Tank Drive Teleop for a two wheeled robot
- * It includes all the skeletal structure that all linear OpModes contain.
- *
- * Use Android Studios to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
- */
-
-@TeleOp(name="control", group="Linear Opmode")
+@TeleOp(name="control1", group="Linear OpMode")
 
 public class control extends LinearOpMode {
 
@@ -60,10 +47,11 @@ public class control extends LinearOpMode {
     private DcMotor rightDrive_front;
     private DcMotor leftDrive_back;
     private  DcMotor rightDrive_back;
-    private Servo color_sensor;
+    //private ColorSensor color_sensor;
     private  DcMotor motor_turn;
     private DcMotor extend_arm;
-    DigitalChannel touch_sensor;
+    private DcMotor climbing;
+    //private DigitalChannel touch_sensor;
 
     @Override
     public void runOpMode() {
@@ -77,74 +65,132 @@ public class control extends LinearOpMode {
         rightDrive_front = hardwareMap.get(DcMotor.class, "rightf_drive");
         leftDrive_back  = hardwareMap.get(DcMotor.class, "leftb_drive");
         rightDrive_back = hardwareMap.get(DcMotor.class, "rightb_drive");
+        climbing = hardwareMap.get(DcMotor.class, "climbing");
 
         leftDrive_front.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightDrive_front.setDirection(DcMotorSimple.Direction.REVERSE);
+       // rightDrive_front.setDirection(DcMotorSimple.Direction.REVERSE);
         leftDrive_back.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightDrive_back.setDirection(DcMotorSimple.Direction.REVERSE);
-        color_sensor = hardwareMap.servo.get("color_sensor");
+        //rightDrive_back.setDirection(DcMotorSimple.Direction.REVERSE);
+        //color_sensor = hardwareMap.colorSensor.get("color_sensor");
         motor_turn = hardwareMap.get(DcMotor.class, "turn_block");
         extend_arm = hardwareMap.get(DcMotor.class, "extend_arm");
-        touch_sensor = hardwareMap.get(DigitalChannel.class, "touch_sensor");
+        //touch_sensor = hardwareMap.get(DigitalChannel.class, "touch_sensor");
+        //color_sensor = hardwareMap.colorSensor.get("color");
         extend_arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         base base1 = new base(leftDrive_front, rightDrive_front, leftDrive_back, rightDrive_back);
-        colour_turning turning1 = new colour_turning(motor_turn,color_sensor);
+        mouth mouth1=new mouth(telemetry);
+        //colour_turning turning1 = new colour_turning(motor_turn,color_sensor);
+        colour_turning turning1 = new colour_turning(motor_turn);
+        //claw claw1=new claw(extend_arm,touch_sensor);
         claw claw1=new claw(extend_arm);
+        climbing climb1=new climbing(climbing);
         String previous_state="down";
         boolean move_mode=false;
         long move_len=0;
+        int mode=-256;
+        int rgb=0;
+        double turn_mode=0;
 
         waitForStart();
         runtime.reset();
         while (opModeIsActive())
         {
-            base1.mecaDrive(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
-            //            //if pressed, change direction
-            claw1.check_b(gamepad1.b,move_mode);
+            if (gamepad1.left_bumper)
+            {
+                base1.turn_left(0.4);
+            }
+            else if (gamepad1.right_bumper)
+            {
+                base1.turn_right(0.4);
+            }
+            else if (gamepad1.left_trigger!=0)
+            {
+                base1.turn_left(gamepad1.left_trigger);
+            }
+            else if (gamepad1.right_trigger!=0)
+            {
+                base1.turn_right(gamepad1.right_trigger);
+            }
+            else
+            {
+                float xx=gamepad1.right_stick_x;
+                float yy=gamepad1.right_stick_y;
+                base1.tankDrive(xx, yy,0.5);
+            }
+            // if pressed, change direction
+           if (gamepad1.b==true)
+            {
+                if (move_mode==false) {
+                    previous_state=claw1.get_previous_state(previous_state);
+                    move_mode=true;
+                }
+            }
+            if (gamepad1.left_stick_y>0)//if (gamepad1.dpad_up==true)
+            {
+                climb1.climbup();
+                //mode=-256;//yellow
+            }
+            else if (gamepad1.left_stick_y<0)//else if(gamepad1.dpad_down==true)
+            {
+                climb1.climbdown();
+                //mode=-1;//yellow
+            }
+            else
+            {
+                climb1.climbstop();
+            }
+            if (gamepad1.a==true)
+            {
+                turning1.turn_motor(0.8);
+                //rgb=turning1.check_color();
+                turn_mode=1;
+            }
+            else if (gamepad1.y==true)
+            {
+                turning1.turn_motor(-0.8);
+                //rgb=turning1.check_color();
+                turn_mode=1;
+            }
+            else
+            {
+                turning1.turn_motor(0);
+            }
+            /*
+            if (turning1.get_position()==0)
+            {
+                if (turn_mode==1)
+                {
+                    if (rgb!=0)
+                    {
+                        turning1.turn_motor(-1);
+                        turn_mode=0;
+                    }
+                }
+            }
+            */
+
             //stop, if
             if (move_mode==true)
             {
-                if (previous_state == "up")
+                if (/*(touch_sensor.getState()) &&*/ (gamepad1.x) && (previous_state=="up"))
                 {
-                    if (touch_sensor.getState())
-                    {
-                        move_mode = false;
-                    }
-                    else
-                    {
-                        move_len++;
-                    }
+                    move_mode = false;
+                }
+                else if (previous_state=="down" && move_len==0)
+                {
+                    move_mode=false;
                 }
                 else
                 {
-                    move_len--;
+                    move_len=claw1.get_movelen(move_len,previous_state);
                 }
             }
-            telemetry.addData("Status", move_len);
-            telemetry.update();
             if (move_mode==true) {
-                if (previous_state=="up")
-                {
-                    extend_arm.setTargetPosition(5);
-                }
-                else
-                    extend_arm.setTargetPosition(-5);
+                claw1.move_arm(previous_state);
             }
-
-            /*
-            double power_y = -gamepad1.left_stick_y;
-            double power_x = gamepad1.left_stick_x;
-
-            double power_left=Range.clip(power_y+power_x, -1.0, 1.0);
-            double power_right=Range.clip(power_y-power_x, -1.0, 1.0);
-
-            leftDrive_front.setPower(power_left);
-            rightDrive_front.setPower(power_right);
-            leftDrive_back.setPower(power_left);
-            rightDrive_back.setPower(power_right);
-            */
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
+            telemetry.addData("Move_mode", move_mode);
+            telemetry.addData("Move_len", move_len);
+            telemetry.addData("color", rgb);
             telemetry.update();
         }
     }

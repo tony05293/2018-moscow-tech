@@ -39,22 +39,23 @@ public class base {
         rf = drive - turn - strafe;
         rb = drive - turn + strafe;
 
-        leftFront.setPower(Range.clip(lf, -1, 1));
-        leftBack.setPower(Range.clip(lb, -1, 1));
-        rightFront.setPower(Range.clip(rf, -1, 1));
-        rightBack.setPower(Range.clip(rb, -1, 1));
+        leftFront.setPower(Range.clip(lf, -0.5, 0.5));
+        leftBack.setPower(Range.clip(lb, -0.5, 0.5));
+        rightFront.setPower(Range.clip(rf, -0.5, 0.5));
+        rightBack.setPower(Range.clip(rb, -0.5, 0.5));
     }
 
-    public void tankDrive(double drive, double turn)
+    public void tankDrive(double yy, double xx, double scale)
     {
         double leftWheel,rightWheel;
+        double drive=yy;
+        double turn=xx;
+        leftWheel    = Range.clip(drive*scale + turn*scale, -1*(scale), 1.0*(scale)) ;
+        rightWheel   = Range.clip(drive*scale - turn*scale, -1*(scale), 1.0*(scale)) ;
 
-        leftWheel    = Range.clip(drive + turn, -1.0, 1.0) ;
-        rightWheel   = Range.clip(drive - turn, -1.0, 1.0) ;
-
-        leftFront.setPower(leftWheel);
+        leftFront.setPower(leftWheel*0.6);
         leftBack.setPower(leftWheel);
-        rightFront.setPower(rightWheel);
+        rightFront.setPower(rightWheel*0.6);
         rightBack.setPower(rightWheel);
     }
 
@@ -98,10 +99,22 @@ public class base {
 
         resetMotors();
     }
-
-    public void turn()
+    public void turn_left(double scale)
     {
-        newTartget(10,-10);
+        scale=scale*-1;
+        leftFront.setPower(0.6*scale);
+        leftBack.setPower(scale);
+        rightFront.setPower(-1*0.6*scale);
+        rightBack.setPower(-1*scale);
+        //newTartget(10,-10);
+    }
+    public void turn_right(double scale)
+    {
+        leftFront.setPower(scale);
+        leftBack.setPower(scale);
+        rightFront.setPower(-1*scale);
+        rightBack.setPower(-1*scale);
+        //newTartget(10,-10);
     }
 
     public String toString()
