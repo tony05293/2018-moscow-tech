@@ -18,8 +18,7 @@ public class base {
     static final double     DRIVE_SPEED             = 0.2;
     static final double     TURN_SPEED              = 0.5;
 
-    public base(DcMotor leftFront, DcMotor rightFront, DcMotor leftBack, DcMotor rightBack)
-    {
+    public base(DcMotor leftFront, DcMotor rightFront, DcMotor leftBack, DcMotor rightBack) {
         this.leftFront = leftFront;
         this.leftBack = leftBack;
         this.rightFront = rightFront;
